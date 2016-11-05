@@ -1,0 +1,19 @@
+﻿<Window x:Class="WpfApplication2.Ventana_Partida"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WpfApplication2"
+        mc:Ignorable="d"
+        Title="Ventana_Partida" Height="300" Width="455.64">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="421*"/>
+            <ColumnDefinition Width="86*"/>
+        </Grid.ColumnDefinitions>
+        <Button x:Name="button" Content="Iniciar Partida" HorizontalAlignment="Left" Margin="185.474,222.247,0,0" VerticalAlignment="Top" Width="75"/>
+        <TextBox x:Name="textBox" HorizontalAlignment="Left" Height="23" Margin="157.391,40.96,0,0" TextWrapping="Wrap" Text="127.0.0.1" VerticalAlignment="Top" Width="120"/>
+        <Label x:Name="label" Content="Tu ip ya que solo es uno y te enviaras a ti mismo simulando que tienes amigos" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Grid.ColumnSpan="2"/>
+
+    </Grid>
+</Window>
