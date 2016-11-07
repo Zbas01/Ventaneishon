@@ -45,8 +45,10 @@ namespace WpfApplication1
 
         Brush ColorA = Brushes.Red;
         Brush ColorB = Brushes.Blue;
+        Point OriginalSize;
 
-        public Window1()
+
+        public Window1(/*IP, PLAYER_NO*/)
         {
             //Window1(IP, Numero de jugador)
             InitializeComponent();
@@ -55,15 +57,24 @@ namespace WpfApplication1
             KeyDown += new KeyEventHandler(OnButtonKeyDown);
             KeyUp += new KeyEventHandler(OnButtonKeyUp);
             timer.Tick += new EventHandler(timer_Tick);
-            timer.Interval = new TimeSpan(0, 0, 0, 0, 8);
+            timer.Interval = new TimeSpan(0, 0, 0, 0, 16);
+            OriginalSize = new Point(textTimeout.Width*6, textTimeout.Height*6);
 
             A.clearMatch();
             B.clearMatch();
-            A.PlayerNo = 2;
+            if (MessageBox.Show("Player 2? Recuerda Cambiar el ip", "", MessageBoxButton.YesNo) == MessageBoxResult.Yes) {
+                A.PlayerNo = 2;  //NUMERO DE JUGADOR 1:HOST 2:CLIENTE
+                initConnection("25.18.128.194", GamePort); //Tu ip Hamachi
+                //initConnection("25.145.85.126", GamePort); //Mi ip Hamachi
+            }
+            else {
+                A.PlayerNo = 1;
+                //initConnection("25.18.128.194", GamePort); //Tu ip Hamachi
+                initConnection("25.145.85.126", GamePort); //Mi ip Hamachi
+            }
 
             //Inicializa
             drawScene(false);
-            initConnection("25.18.128.194", GamePort);
             timer.Start();
         }
 
@@ -117,19 +128,14 @@ namespace WpfApplication1
                 {
                     byte[] receiveBytes = GameSocket.Receive(ref getConn);
                     B = JsonConvert.DeserializeObject<GamePacket>(Encoding.ASCII.GetString(receiveBytes));
-
                     if (A.PlayerNo != 1)
                     {
+                        if (B.Dead == -1)
+                            A.Dead = -1;
                         A.Position = B.PositionB;
                         A.Speed = B.SpeedB;
                         A.PositionB = B.Position;
                         A.SpeedB = B.Speed;
-
-                        A.Position.X = 800 - A.PositionB.X; //Lo pone en la derecha
-                        A.PositionB.X = 800 - A.PositionB.X; //Lo pone en la izquierda
-                        A.SpeedB.X *= -1;
-                        A.Speed.X *= -1;
-
                         A.Score = B.Score;
 
                         A.Round = B.Round;
@@ -152,21 +158,23 @@ namespace WpfApplication1
 
         private void serverSide()
         {
-            textP1Points.Text = A.Score.X.ToString();
-            textP2Points.Text = A.Score.Y.ToString();
-            if (A.Dead == -2)
+            setConnection();
+            if (A.Dead == 0 && B.Dead !=0)
                 textP1Ready.Text = "Listo";
             else
             if (A.Dead == -1)
-                textP1Ready.Text = "Esperando";
+                textP1Ready.Text = "Presiona [Espacio]";
             else
                 textP1Ready.Text = "";
 
-            if (B.Dead == -2)
+            if (B.Dead == 0 && A.Dead != 0)
                 textP2Ready.Text = "Listo";
             else
+            if (B.Dead == -1 && A.Dead == -1)
+                textP2Ready.Text = "Esperando Host";
+            else
             if (B.Dead == -1)
-                textP2Ready.Text = "Esperando";
+                textP2Ready.Text = "Esperando...";
             else
                 textP2Ready.Text = "";
 
@@ -199,9 +207,8 @@ namespace WpfApplication1
         }
         private void clientSide()
         {
-            textP1Points.Text = B.Score.Y.ToString();
-            textP2Points.Text = B.Score.X.ToString();
-            if (B.Dead == -2)
+            setConnection();
+            if (B.Dead == 0 && A.Dead != 0)
                 textP1Ready.Text = "Listo";
             else
             if (B.Dead == -1)
@@ -209,11 +216,14 @@ namespace WpfApplication1
             else
                 textP1Ready.Text = "";
 
-            if (A.Dead == -2)
+            if (A.Dead == 0 && B.Dead != 0)
                 textP2Ready.Text = "Listo";
             else
+            if (B.Dead != 0)
+                textP2Ready.Text = "Esperando Host";
+            else
             if (A.Dead == -1)
-                textP2Ready.Text = "Esperando";
+                textP2Ready.Text = "Presiona [Espacio]";
             else
                 textP2Ready.Text = "";
 
@@ -224,43 +234,53 @@ namespace WpfApplication1
             M2 = M1;
 
             drawScene(true);
-            if (A.Dead == 0 && B.Dead == 0 || A.Dead > 0)
-            switch (B.Dead)
-            {
-                case 1:
-                    A.Dead = -1;
-                    paintCanvas.Background = Brushes.DarkRed;
-                    break;
-                case 2:
-                    A.Dead = -1;
-                    paintCanvas.Background = Brushes.DarkBlue;
-                    break;
-                case 3:
-                    A.Dead = -1;
-                    paintCanvas.Background = Brushes.DarkGreen;
-                    break;
-                case 0:
-                    paintCanvas.Background = Brushes.Black;
-                    break;
-            }
+            double disA = distance(A.Position, Ring);
+            double disB = distance(A.PositionB, Ring);
+            if (disA >= 200 + M1)
+                if (disB >= 200 + M1)
+                     paintCanvas.Background = Brushes.DarkGreen;
+                else paintCanvas.Background = Brushes.DarkRed;
+            else
+                if (disB >= 200 + M1)
+                paintCanvas.Background = Brushes.DarkBlue;
+            else paintCanvas.Background = Brushes.Black;
         }
 
         private void timer_Tick(object sender, EventArgs e)
         {
-            setConnection();
-            textRound.Text = A.Round.ToString();
+            textP1Points.Text = B.Score.X.ToString();
+            textP2Points.Text = B.Score.Y.ToString();
+            textRound.Text = Math.Max(1,A.Round).ToString();
+
+            Title = A.Dead.ToString();
 
             if (A.PlayerNo == 1)
                 serverSide();
             else
                 clientSide();
 
-            if (A.Dead != 0 || B.Dead != 0) {
+            if (A.Dead != 0 || B.Dead != 0)
+            {
                 drawScene(true);
-                if (A.Dead == -2 && B.Dead == -2)
-                    A.Dead = 0;
                 return;
             }
+            else if (RoundTimeout > 0)
+            {
+                RoundTimeout -= .03;
+                if (RoundTimeout > 1)
+                {
+                    textTimeout.Text = ((int)RoundTimeout).ToString();
+                    textTimeout.RenderTransform = new ScaleTransform(6+(RoundTimeout-Math.Floor(RoundTimeout))*2, 6 + (RoundTimeout - Math.Floor(RoundTimeout))*2, 0, 0);
+                    return;
+                }
+                else
+                {
+                    textTimeout.RenderTransform = new ScaleTransform(6 + (1 - (RoundTimeout - Math.Floor(RoundTimeout))) * 4, 6 + (1-(RoundTimeout -Math.Floor(RoundTimeout)))*4, 0, 0);
+                    textTimeout.Text = "FIGHT!!!";
+                    A.Dead = 0;
+                }
+            }
+            else textTimeout.Text = "";
 
             Accel += .0005 * A.Level;
             ShockCount -= .01;
@@ -275,8 +295,8 @@ namespace WpfApplication1
             {
                 if (B.Up)       A.SpeedB.Y -= Accel * 3;
                 if (B.Down)     A.SpeedB.Y += Accel * 3;
-                if (B.Left)     A.SpeedB.X += Accel * 3;
-                if (B.Right)    A.SpeedB.X -= Accel * 3;
+                if (B.Left)     A.SpeedB.X -= Accel * 3;
+                if (B.Right)    A.SpeedB.X += Accel * 3;
             }
 
             //Aplica la velocidad
@@ -440,7 +460,7 @@ namespace WpfApplication1
                         Accel = .1;
                         A.clearRound();
                         B.clearRound();
-                        A.Dead = -2;
+                        A.Dead = 0;
                         break;
                     case Key.F1:
                         A.aShock = !A.aShock;
@@ -498,6 +518,8 @@ namespace WpfApplication1
                 case Key.S: A.Down  = false; break;
                 case Key.W: A.Up    = false; break;
             }
+            if (A.PlayerNo == 2)
+                setConnection();
         }
     }
     class GamePacket
@@ -514,6 +536,7 @@ namespace WpfApplication1
         public Point Score;
         public int Round;       //Denota el Ready
         public int Dead;
+
 
         public bool SmallBalls = false;
         public bool aShock = false;
