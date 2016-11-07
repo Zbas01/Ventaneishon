@@ -1,16 +1,15 @@
-﻿using Newtonsoft.Json;
-using System;
-using System.Net;
-using System.Net.Sockets;
+﻿using System;
 using System.Text;
-using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using Newtonsoft.Json;
+using System.Net;
+using System.Net.Sockets;
+using System.Threading;
 using System.Windows.Threading;
-using System.ComponentModel;
 
 namespace WpfApplication1
 {
@@ -20,6 +19,49 @@ namespace WpfApplication1
         Normal = 5,
         Hard = 10,
         Insane = 20,
+    }
+    class GamePacket
+    {
+        public int PlayerNo = 1;
+        public double Level = (double)Difficulty.Normal;
+
+        public Point Position;
+        public Point Speed;
+
+        public Point PositionB;
+        public Point SpeedB;
+
+        public Point Score;
+        public int Round;       //Denota el Ready
+        public int Dead;
+
+        public bool SmallBalls = false;
+        public bool aShock = false;
+        public bool noTouch = false;
+
+        public bool Up, Down, Left, Right;
+
+        public void clearRound() //Resetea el paquete para nueva ronda
+        {
+            Round++;
+            Position.X = 300;
+            Position.Y = 300 + 100*PlayerNo;
+            Speed.X = 0;
+            Speed.Y = 0;
+            Up = false;
+            Down = false;
+            Left = false;
+            Right = false;
+            Dead = 0;       //Ready
+        }
+        public void clearMatch() //Resetea el paquete para revancha
+        {
+            Score.X = 0;
+            Score.Y = 0;
+            Round = -1;
+            clearRound();
+        }
+
     }
     public partial class Window1 : Window
     {
@@ -51,25 +93,15 @@ namespace WpfApplication1
             //Window1(IP, Numero de jugador)
             InitializeComponent();
             //Inicializa los eventos
-            Closing += Window_Closing;
             KeyDown += new KeyEventHandler(OnButtonKeyDown);
             KeyUp += new KeyEventHandler(OnButtonKeyUp);
             timer.Tick += new EventHandler(timer_Tick);
-            timer.Interval = new TimeSpan(0, 0, 0, 0, 8);
-
-            A.clearMatch();
-            B.clearMatch();
-            A.PlayerNo = 2;
+            timer.Interval = new TimeSpan(0,0,0,0,8); 
+            timer.Start();
 
             //Inicializa
             drawScene(false);
-            initConnection("25.18.128.194", GamePort);
-            timer.Start();
-        }
-
-        private void Window_Closing(object sender, CancelEventArgs e)
-        {
-            GameExit = true;
+            initConnection("127.0.0.1", GamePort);
         }
 
         private void initConnection(string ip, int port)
@@ -81,13 +113,14 @@ namespace WpfApplication1
         }
         private void drawScene(bool clear)
         {
-            paintCanvas.Children.Remove(textTimeout);
             if (clear)
             {
+                paintCanvas.Children.Remove(textTimeout);
                 paintCanvas.Children.RemoveAt(paintCanvas.Children.Count - 1);
                 paintCanvas.Children.RemoveAt(paintCanvas.Children.Count - 1);
                 paintCanvas.Children.RemoveAt(paintCanvas.Children.Count - 1);
             }
+            paintCanvas.Background = Brushes.Black;
 
             if (A.PlayerNo == 1)
             {
@@ -106,7 +139,7 @@ namespace WpfApplication1
             else     paintCircle(Ring, Brushes.Gray         , RingRad);
 
             paintCircle(A.Position, ColorA, M1);
-            paintCircle(A.PositionB, ColorB, M2);
+            paintCircle(B.Position, ColorB, M2);
             paintCanvas.Children.Insert(paintCanvas.Children.Count, textTimeout);
         }
 
@@ -154,39 +187,21 @@ namespace WpfApplication1
         {
             textP1Points.Text = A.Score.X.ToString();
             textP2Points.Text = A.Score.Y.ToString();
-            if (A.Dead == -2)
-                textP1Ready.Text = "Listo";
-            else
-            if (A.Dead == -1)
-                textP1Ready.Text = "Esperando";
-            else
-                textP1Ready.Text = "";
-
-            if (B.Dead == -2)
-                textP2Ready.Text = "Listo";
-            else
-            if (B.Dead == -1)
-                textP2Ready.Text = "Esperando";
-            else
-                textP2Ready.Text = "";
-
             if (A.SmallBalls)
                 M1 = 8;
             else
                 M1 = 32;
             M2 = M1;
-
-            if (A.Dead == 0 && B.Dead == 0 || A.Dead > 0)
-                switch (A.Dead) {
+            switch (A.Dead) {
                 case 1:
-                    A.Dead = -1;
-                    A.Score.Y++;
-                    paintCanvas.Background = Brushes.DarkBlue;
-                    break;
-                case 2:
                     A.Dead = -1;
                     A.Score.X++;
                     paintCanvas.Background = Brushes.DarkRed;
+                    break;
+                case 2:
+                    A.Dead = -1;
+                    A.Score.Y++;
+                    paintCanvas.Background = Brushes.DarkBlue;
                     break;
                 case 3:
                     A.Dead = -1;
@@ -201,22 +216,6 @@ namespace WpfApplication1
         {
             textP1Points.Text = B.Score.Y.ToString();
             textP2Points.Text = B.Score.X.ToString();
-            if (B.Dead == -2)
-                textP1Ready.Text = "Listo";
-            else
-            if (B.Dead == -1)
-                textP1Ready.Text = "Esperando";
-            else
-                textP1Ready.Text = "";
-
-            if (A.Dead == -2)
-                textP2Ready.Text = "Listo";
-            else
-            if (A.Dead == -1)
-                textP2Ready.Text = "Esperando";
-            else
-                textP2Ready.Text = "";
-
             if (B.SmallBalls)
                 M1 = 8;
             else
@@ -224,7 +223,7 @@ namespace WpfApplication1
             M2 = M1;
 
             drawScene(true);
-            if (A.Dead == 0 && B.Dead == 0 || A.Dead > 0)
+            if (A.Dead != B.Dead && A.Dead != -1)
             switch (B.Dead)
             {
                 case 1:
@@ -255,12 +254,7 @@ namespace WpfApplication1
             else
                 clientSide();
 
-            if (A.Dead != 0 || B.Dead != 0) {
-                drawScene(true);
-                if (A.Dead == -2 && B.Dead == -2)
-                    A.Dead = 0;
-                return;
-            }
+            if (A.Dead != 0 || B.Dead != 0) { drawScene(true); return; }
 
             Accel += .0005 * A.Level;
             ShockCount -= .01;
@@ -293,10 +287,7 @@ namespace WpfApplication1
                 A.Position.Y -= A.Speed.Y;
                 A.PositionB.X -= A.SpeedB.X;
                 A.PositionB.Y -= A.SpeedB.Y;
-
-
-                A.SpeedB.X *=.5;
-                A.SpeedB.Y *=.5;
+                
 
                 if (A.noTouch && A.PlayerNo == 1)
                 {
@@ -388,12 +379,12 @@ namespace WpfApplication1
             //Checa si nadie esta fuera del ring
             if (A.PlayerNo == 1)
             {
-                if (disA >= 200 + M1)
-                    if (disB >= 200 + M1)
+                if (disA < 200 + M1)
+                    if (disB < 200 + M1)
                          A.Dead = 3; //Empate
                     else A.Dead = 1; //Azul gana
                 else 
-                if (disB >= 200 + M1)
+                if (disB < 200 + M1)
                     A.Dead = 2; //Rojo Gana
             }
         }
@@ -431,16 +422,16 @@ namespace WpfApplication1
         }
         private void OnButtonKeyDown(object sender, KeyEventArgs e)
         {
-            if (A.Dead == -1)
+            if (A.Dead != 0 && A.Dead != -1)
                 switch (e.Key)
                 {
                     case Key.Space:
                         RoundTimeout = 4;
                         ShockCount = 1;
                         Accel = .1;
+
                         A.clearRound();
-                        B.clearRound();
-                        A.Dead = -2;
+                        A.clearRound();
                         break;
                     case Key.F1:
                         A.aShock = !A.aShock;
@@ -499,54 +490,6 @@ namespace WpfApplication1
                 case Key.W: A.Up    = false; break;
             }
         }
-    }
-    class GamePacket
-    {
-        public int PlayerNo = 1;
-        public double Level = (double)Difficulty.Normal;
-
-        public Point Position;
-        public Point Speed;
-
-        public Point PositionB;
-        public Point SpeedB;
-
-        public Point Score;
-        public int Round;       //Denota el Ready
-        public int Dead;
-
-        public bool SmallBalls = false;
-        public bool aShock = false;
-        public bool noTouch = false;
-
-        public bool Up, Down, Left, Right;
-
-        public void clearRound() //Resetea el paquete para nueva ronda
-        {
-            Round++;
-            Position.X = 300;
-            Position.Y = 300;
-            Speed.X = 0;
-            Speed.Y = 0;
-            PositionB.X = 500;
-            PositionB.Y = 300;
-            SpeedB.X = 0;
-            SpeedB.Y = 0;
-
-            Up = false;
-            Down = false;
-            Left = false;
-            Right = false;
-            Dead = -1;       //Ready
-        }
-        public void clearMatch() //Resetea el paquete para revancha
-        {
-            Score.X = 0;
-            Score.Y = 0;
-            Round = -1;
-            clearRound();
-        }
-
     }
 }
 
