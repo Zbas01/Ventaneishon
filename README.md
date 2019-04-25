@@ -1,2 +1,2 @@
-# Ventaneishon
+# Sumo Fighters
 Las cigüeñas llegan, como todos los años, hasta un pintoresco circo para repartir los bebés a sus respectivas mamás. La señora Dumbo, una elefanta, descubre que su bebé tiene unas orejas enormes; todas sus compañeras se ríen de él, pero la señora Dumbo lo defiende siempre, hasta el punto de ser encerrada por enfrentarse a todo aquel que se mofe de su retoño. El pequeño Dumbo, maltratado y ridiculizado por todos sus compañeros, sólo cuenta con la ayuda de un minúsculo ratoncito llamado Timothy, que decide hacer de él una estrella del circo.
