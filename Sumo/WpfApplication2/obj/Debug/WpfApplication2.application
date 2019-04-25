@@ -4,14 +4,14 @@
   <description asmv2:publisher="WpfApplication2" asmv2:product="WpfApplication2" xmlns="urn:schemas-microsoft-com:asm.v1" />
   <deployment install="true" mapFileExtensions="true" />
   <dependency>
-    <dependentAssembly dependencyType="install" codebase="WpfApplication2.exe.manifest" size="4686">
+    <dependentAssembly dependencyType="install" codebase="WpfApplication2.exe.manifest" size="4615">
       <assemblyIdentity name="WpfApplication2.exe" version="1.0.0.1" publicKeyToken="0000000000000000" language="neutral" processorArchitecture="msil" type="win32" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1" />
-        <dsig:DigestValue>bTEEclBuXs8cusqwxjeU8HPZmDM=</dsig:DigestValue>
+        <dsig:DigestValue>XVuK9GFz6jk6jPGnyWdPxRX/8YI=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>

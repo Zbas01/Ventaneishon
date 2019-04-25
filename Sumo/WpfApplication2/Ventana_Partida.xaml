@@ -11,9 +11,19 @@
             <ColumnDefinition Width="421*"/>
             <ColumnDefinition Width="86*"/>
         </Grid.ColumnDefinitions>
-        <Button x:Name="button" Content="Iniciar Partida" HorizontalAlignment="Left" Margin="185.474,222.247,0,0" VerticalAlignment="Top" Width="75"/>
-        <TextBox x:Name="textBox" HorizontalAlignment="Left" Height="23" Margin="157.391,40.96,0,0" TextWrapping="Wrap" Text="127.0.0.1" VerticalAlignment="Top" Width="120"/>
+        <ComboBox Name="cmbColors" Margin="140,30,77,200.04"  SelectionChanged="CmbColors_SelectionChanged" IsEditable="True">
+            <!--ComboBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" />
+                    </StackPanel>
+                </DataTemplate>
+            </-->
+        </ComboBox>
         <Label x:Name="label" Content="Tu ip ya que solo es uno y te enviaras a ti mismo simulando que tienes amigos" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Grid.ColumnSpan="2"/>
+        <Label x:Name="label_Copy" Content="Host ip" HorizontalAlignment="Left" Margin="95,37.96,0,0" VerticalAlignment="Top" Width="57.391" />
+        <Button x:Name="button" Content="Hostear" HorizontalAlignment="Left" Margin="140,68.96,0,0" VerticalAlignment="Top" Width="75" Click="Button_Click"/>
+        <Button x:Name="button_Copy" Content="Conectarse" HorizontalAlignment="Left" Margin="220,68.96,0,0" VerticalAlignment="Top" Width="75" Click="Button_Copy_Click"/>
 
     </Grid>
 </Window>

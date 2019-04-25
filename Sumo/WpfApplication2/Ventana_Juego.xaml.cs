@@ -28,7 +28,8 @@ namespace WpfApplication1
         GamePacket B = new GamePacket(); //Recieving
         UdpClient GameSocket;
         IPAddress ipa;
-        int GamePort = 7707;
+        int GamePortIn = 7707;
+        int GamePortOut = 7708;
         bool GameExit = false;
 
         //Timeouts
@@ -48,7 +49,7 @@ namespace WpfApplication1
         Point OriginalSize;
 
 
-        public Window1(/*IP, PLAYER_NO*/)
+        public Window1(string IP, int PLAYER_NO)
         {
             //Window1(IP, Numero de jugador)
             InitializeComponent();
@@ -62,16 +63,27 @@ namespace WpfApplication1
 
             A.clearMatch();
             B.clearMatch();
-            if (MessageBox.Show("Player 2? Recuerda Cambiar el ip", "", MessageBoxButton.YesNo) == MessageBoxResult.Yes) {
-                A.PlayerNo = 2;  //NUMERO DE JUGADOR 1:HOST 2:CLIENTE
-                initConnection("25.18.128.194", GamePort); //Tu ip Hamachi
+            /*if (MessageBox.Show("Player 2? Recuerda Cambiar el ip", "", MessageBoxButton.YesNo) == MessageBoxResult.Yes) {
+                A.PlayerNo = PLAYER_NO;  //NUMERO DE JUGADOR 1:HOST 2:CLIENTE
+                initConnection(IP, GamePort); //Tu ip Hamachi
                 //initConnection("25.145.85.126", GamePort); //Mi ip Hamachi
             }
-            else {
-                A.PlayerNo = 1;
+            else {*/
+                A.PlayerNo = PLAYER_NO;
                 //initConnection("25.18.128.194", GamePort); //Tu ip Hamachi
-                initConnection("25.145.85.126", GamePort); //Mi ip Hamachi
+            if (PLAYER_NO != 1)
+            {
+                GamePortIn = 7707;
+                GamePortOut = 7708;
             }
+            else
+            {
+                GamePortIn = 7708;
+                GamePortOut = 7707;
+            }
+
+                initConnection(IP, GamePortIn, GamePortOut); //Mi ip Hamachi
+            //}
 
             //Inicializa
             drawScene(false);
@@ -83,10 +95,13 @@ namespace WpfApplication1
             GameExit = true;
         }
 
-        private void initConnection(string ip, int port)
+        private void initConnection(string ip, int portIn, int portOut)
         {
             ipa = IPAddress.Parse(ip);
-            GameSocket = new UdpClient(port, AddressFamily.InterNetwork);
+            tempSocket = new UdpClient();
+            setConn = new IPEndPoint(ipa, portOut);
+            //Abre un puerto para leer
+            GameSocket = new UdpClient(portIn, AddressFamily.InterNetwork);
             Thread connThread = new Thread(getConnection);
             connThread.Start();
         }
@@ -122,7 +137,7 @@ namespace WpfApplication1
         }
 
         private void getConnection() {
-            IPEndPoint getConn = new IPEndPoint(ipa, GamePort);
+            IPEndPoint getConn = new IPEndPoint(ipa, GamePortIn);
             while(!GameExit)
                 if (GameSocket.Available > 0)
                 {
@@ -147,13 +162,19 @@ namespace WpfApplication1
                     }
                 }
         }
+        /// <summary>
+        /// TODO: Arreglar los endpoints y client
+        /// </summary>
+        UdpClient tempSocket = null;
+        IPEndPoint setConn = null;
         private void setConnection()
         {
-            IPEndPoint setConn = new IPEndPoint(ipa, GamePort);
-            UdpClient tempSocket = new UdpClient();
-            string test = JsonConvert.SerializeObject(A);
-            byte[] sBytes = Encoding.ASCII.GetBytes(test);
-            tempSocket.Send(sBytes, sBytes.Length, setConn);
+            if (setConn != null)
+            {
+                string test = JsonConvert.SerializeObject(A);
+                byte[] sBytes = Encoding.ASCII.GetBytes(test);
+                tempSocket.Send(sBytes, sBytes.Length, setConn);
+            }
         }
 
         private void serverSide()
